@@ -1,3 +1,13 @@
-<h1>
-  {{title}}
-</h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1>AMIS Conference schedule</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <acs-overview [rooms]="data.rooms$ | async" [slots]="data.slots$ | async" [sessionModel]="data.sessionModel$ | async">
+            </acs-overview>
+        </div>
+    </div>
+</div>
