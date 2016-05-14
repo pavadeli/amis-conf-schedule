@@ -54,16 +54,13 @@ export interface Room {
 export interface Slot {
     slotId: string;
     slotLabel: string;
+    slotStartTime: string;
+    slotEndTime: string;
 }
 
 interface InputShape {
     rooms: Room[];
-
-    slots: Slot & {
-        slotStartTime: string;
-        slotEndTime: string;
-    }[];
-
+    slots: Slot[];
     sessions: SessionShape[];
 }
 

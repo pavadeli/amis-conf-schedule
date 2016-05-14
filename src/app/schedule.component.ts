@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { ScheduleDataService } from './shared';
 import { OverviewComponent } from './overview';
 
@@ -8,6 +8,7 @@ import { OverviewComponent } from './overview';
     templateUrl: 'schedule.component.html',
     styleUrls: ['schedule.component.css'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [ScheduleDataService],
     directives: [OverviewComponent]
 })
