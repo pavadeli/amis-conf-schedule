@@ -1,5 +1,5 @@
-import { Component, ViewEncapsulation, ChangeDetectionStrategy, Input } from '@angular/core';
-import { Room, Slot, SessionsModel } from '../shared';
+import { Component, ViewEncapsulation, ChangeDetectionStrategy, Input, OnChanges } from '@angular/core';
+import { ScheduleDataModel, Session } from '../shared';
 import { SessionPreviewComponent } from './session-preview';
 
 @Component({
@@ -10,10 +10,20 @@ import { SessionPreviewComponent } from './session-preview';
     changeDetection: ChangeDetectionStrategy.OnPush,
     directives: [SessionPreviewComponent]
 })
-export class OverviewComponent {
+export class OverviewComponent implements OnChanges {
 
-    @Input() rooms: Room[];
-    @Input() slots: Slot[];
-    @Input() sessionModel: SessionsModel;
+    @Input() model: ScheduleDataModel;
+    slotSessions: { [slotId: string]: Session[] };
+
+    ngOnChanges() {
+        this.slotSessions = {};
+        if (this.model) {
+            this.model.slots.forEach(slot => {
+                this.slotSessions[slot.slotId] = this.model.rooms
+                    .map(room => slot.sessions[room.roomId])
+                    .filter(session => !session || !session.continued);
+            });
+        }
+    }
 
 }

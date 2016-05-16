@@ -9,13 +9,56 @@ export class ScheduleDataService {
 
     constructor(private http: Http) { }
 
-    allData = this.http.get('https://data-api-lucasjellema.apaas.em2.oraclecloud.com/all')
-        .map(r => <InputShape>r.json())
+    model$ = this.http.get('https://data-api-lucasjellema.apaas.em2.oraclecloud.com/all')
+        .map(r => new ScheduleDataModel(r.json()))
         .cache(1);
+}
 
-    rooms$ = this.allData.map(d => orderBy(d.rooms, e => e.roomLabel));
-    slots$ = this.allData.map(d => orderBy(d.slots, e => e.slotStartTime));
-    sessionModel$ = this.allData.map(d => new SessionsModel(d.sessions));
+export class ScheduleDataModel {
+    rooms: Room[];
+    slots: SlotInfo[];
+
+    constructor({rooms, slots, sessions}: InputShape) {
+        this.rooms = orderBy(rooms, e => e.roomLabel);
+        this.slots = orderBy(slots, e => e.slotStartTime)
+            .map(({slotId, slotLabel, slotStartTime, slotEndTime}) => ({
+                slotId, slotLabel, slotStartTime, slotEndTime,
+                sessions: createSessionMap(sessions, rooms, slotId)
+            }));
+    }
+}
+
+function createSessionMap(sessions: SessionShape[], rooms: Room[], slotId: string): SessionMap {
+    let smap: SessionMap = {};
+    let roomsToFind = new Set<string>(rooms.map(r => r.roomId));
+    for (let session of sessions) {
+        if (session.planning.sltId === slotId) {
+            let {romId} = session.planning;
+            roomsToFind.delete(romId);
+            smap[romId] = session;
+            if (session.planning.sessionDuration === '2') {
+                session.doubleSlot = true;
+            }
+        }
+    }
+    // Some rooms were not filled, find out what is going on...
+    roomsToFind.forEach(roomId => {
+        // Try previous slot.
+        let previousSlotId = (+slotId - 1).toString();
+        for (let session of sessions) {
+            if (session.planning.sltId === previousSlotId && session.planning.romId === roomId) {
+                if (session.planning.sessionDuration === '2') {
+                    // Aha!
+                    let {speakers, title} = session;
+                    smap[roomId] = { speakers, title, continued: true };
+                } else {
+                    // Give up.
+                    return;
+                }
+            }
+        }
+    });
+    return smap;
 }
 
 export class SessionsModel {
@@ -38,12 +81,22 @@ function orderBy<T>(arr: T[], project: (element: T) => any): T[] {
     });
 }
 
+export interface SlotInfo extends Slot {
+    sessions: SessionMap;
+}
+
+export interface SessionMap {
+    [room: string]: Session;
+}
+
 export interface Session {
     title: string;
     speakers: {
         firstName: string;
         lastName: string;
     }[];
+    continued?: boolean;
+    doubleSlot?: boolean;
 }
 
 export interface Room {
@@ -68,5 +121,6 @@ interface SessionShape extends Session {
     planning: {
         romId: string;
         sltId: string;
+        sessionDuration: string;
     };
 }
