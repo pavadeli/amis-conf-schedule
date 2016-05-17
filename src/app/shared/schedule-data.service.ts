@@ -12,6 +12,7 @@ export class ScheduleDataService {
     model$ = this.http.get('https://data-api-lucasjellema.apaas.em2.oraclecloud.com/all')
         .map(r => new ScheduleDataModel(r.json()))
         .cache(1);
+
 }
 
 export class ScheduleDataModel {
@@ -20,44 +21,37 @@ export class ScheduleDataModel {
 
     constructor({rooms, slots, sessions}: InputShape) {
         this.rooms = orderBy(rooms, e => e.roomLabel);
+        sessions.forEach(session => {
+            let {planning} = session;
+            session.startTime = planning.slotDate + ' ' + planning.sessionStartTime;
+            session.endTime = planning.slotDate + ' ' + planning.sessionEndTime;
+            session.slots = 0;
+        });
         this.slots = orderBy(slots, e => e.slotStartTime)
-            .map(({slotId, slotLabel, slotStartTime, slotEndTime}) => ({
-                slotId, slotLabel, slotStartTime, slotEndTime,
-                sessions: createSessionMap(sessions, rooms, slotId)
-            }));
+            .map(slot => {
+                let {slotId, slotLabel, slotStartTime, slotEndTime} = slot;
+                return {
+                    slotId, slotLabel, slotStartTime, slotEndTime,
+                    sessions: createSessionMap(sessions, rooms, slot)
+                };
+            });
     }
 }
 
-function createSessionMap(sessions: SessionShape[], rooms: Room[], slotId: string): SessionMap {
+function createSessionMap(sessions: SessionShape[], rooms: Room[], slot: Slot): SessionMap {
     let smap: SessionMap = {};
-    let roomsToFind = new Set<string>(rooms.map(r => r.roomId));
     for (let session of sessions) {
-        if (session.planning.sltId === slotId) {
-            let {romId} = session.planning;
-            roomsToFind.delete(romId);
-            smap[romId] = session;
-            if (session.planning.sessionDuration === '2') {
-                session.doubleSlot = true;
+        if (session.startTime <= slot.slotStartTime
+            && session.endTime > slot.slotStartTime) {
+            let oldSession = smap[session.planning.romId];
+            if (oldSession) {
+                console.warn('Scheduling conflict! Already a session present at this slot!');
+                --oldSession.slots;
             }
+            smap[session.planning.romId] = session;
+            ++session.slots;
         }
     }
-    // Some rooms were not filled, find out what is going on...
-    roomsToFind.forEach(roomId => {
-        // Try previous slot.
-        let previousSlotId = (+slotId - 1).toString();
-        for (let session of sessions) {
-            if (session.planning.sltId === previousSlotId && session.planning.romId === roomId) {
-                if (session.planning.sessionDuration === '2') {
-                    // Aha!
-                    let {speakers, title} = session;
-                    smap[roomId] = { speakers, title, continued: true };
-                } else {
-                    // Give up.
-                    return;
-                }
-            }
-        }
-    });
     return smap;
 }
 
@@ -95,8 +89,9 @@ export interface Session {
         firstName: string;
         lastName: string;
     }[];
-    continued?: boolean;
-    doubleSlot?: boolean;
+    startTime: string;
+    endTime: string;
+    slots: number;
 }
 
 export interface Room {
@@ -121,6 +116,8 @@ interface SessionShape extends Session {
     planning: {
         romId: string;
         sltId: string;
-        sessionDuration: string;
+        slotDate: string;
+        sessionStartTime: string;
+        sessionEndTime: string;
     };
 }

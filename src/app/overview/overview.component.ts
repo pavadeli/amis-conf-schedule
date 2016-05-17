@@ -21,7 +21,7 @@ export class OverviewComponent implements OnChanges {
             this.model.slots.forEach(slot => {
                 this.slotSessions[slot.slotId] = this.model.rooms
                     .map(room => slot.sessions[room.roomId])
-                    .filter(session => !session || !session.continued);
+                    .filter(session => !session || session.startTime === slot.slotStartTime);
             });
         }
     }

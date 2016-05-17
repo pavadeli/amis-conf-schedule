@@ -12,7 +12,7 @@
                 <th title="{{slot.slotStartTime}} - {{slot.slotEndTime}}">
                     {{slot.slotLabel}}
                 </th>
-                <td *ngFor="let session of slotSessions[slot.slotId]" class="session-cell" [rowSpan]="session && session.doubleSlot ? 2 : 1">
+                <td *ngFor="let session of slotSessions[slot.slotId]" class="session-cell" [rowSpan]="session?.slots || 1">
                     <div *ngIf="!session" class="session-cell-empty">&nbsp;</div>
                     <acs-session-preview *ngIf="session" [session]="session"></acs-session-preview>
                 </td>
