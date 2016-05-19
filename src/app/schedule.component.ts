@@ -1,6 +1,10 @@
-import { Component, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
-import { ScheduleDataService } from './shared';
+import { Component, ViewEncapsulation } from '@angular/core';
+import { ScheduleDataService, ScheduleDataModel } from './shared';
 import { OverviewComponent } from './overview';
+
+import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/ignoreElements';
 
 @Component({
     moduleId: module.id,
@@ -8,10 +12,19 @@ import { OverviewComponent } from './overview';
     templateUrl: 'schedule.component.html',
     styleUrls: ['schedule.component.css'],
     encapsulation: ViewEncapsulation.None,
-    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [ScheduleDataService],
     directives: [OverviewComponent]
 })
 export class ScheduleAppComponent {
-    constructor(private data: ScheduleDataService) { }
+
+    error: string;
+    model: ScheduleDataModel;
+
+    constructor(data: ScheduleDataService) {
+        data.model$.subscribe(
+            model => this.model = model,
+            () => this.error = 'Could not load session information. Service unavailable.'
+        );
+    }
+
 }

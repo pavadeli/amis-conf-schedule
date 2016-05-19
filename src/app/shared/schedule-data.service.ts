@@ -55,19 +55,6 @@ function createSessionMap(sessions: SessionShape[], rooms: Room[], slot: Slot): 
     return smap;
 }
 
-export class SessionsModel {
-    constructor(private sessions: SessionShape[]) { }
-
-    find(roomId: string, slotId: string): Session {
-        for (let session of this.sessions) {
-            if (session.planning.romId === roomId && session.planning.sltId === slotId) {
-                return session;
-            }
-        }
-        return null;
-    }
-}
-
 function orderBy<T>(arr: T[], project: (element: T) => any): T[] {
     return arr.sort((a, b) => {
         let a1 = project(a), b1 = project(b);
