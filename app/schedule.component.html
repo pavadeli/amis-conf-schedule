@@ -6,8 +6,9 @@
     </div>
     <div class="row">
         <div class="col-xs-12">
-            <acs-overview [model]="data.model$ | async">
+            <acs-overview [model]="model">
             </acs-overview>
+            <p class="text-danger">{{error}}</p>
         </div>
     </div>
 </div>
