@@ -2,10 +2,6 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { ScheduleDataService, ScheduleDataModel } from './shared';
 import { OverviewComponent } from './overview';
 
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/ignoreElements';
-
 @Component({
     moduleId: module.id,
     selector: 'schedule-app',
