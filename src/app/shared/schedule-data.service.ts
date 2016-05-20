@@ -41,8 +41,8 @@ export class ScheduleDataModel {
 function createSessionMap(sessions: SessionShape[], rooms: Room[], slot: Slot): SessionMap {
     let smap: SessionMap = {};
     for (let session of sessions) {
-        if (session.startTime <= slot.slotStartTime
-            && session.endTime > slot.slotStartTime) {
+        if (session.startTime === slot.slotStartTime ||
+            session.startTime <= slot.slotStartTime && session.endTime > slot.slotStartTime) {
             let oldSession = smap[session.planning.romId];
             if (oldSession) {
                 console.warn('Scheduling conflict! Already a session present at this slot!');
